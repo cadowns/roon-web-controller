@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Roon Web Controller - Input</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="apple-touch-icon" href="/favicons/apple-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+        (function(a, b, c) {
+            if (c in b && b[c]) {
+                var d,
+                    e = a.location,
+                    f = /^(a|html)$/i;
+                a.addEventListener(
+                    "click",
+                    function(a) {
+                        d = a.target;
+                        while (!f.test(d.nodeName)) d = d.parentNode;
+                        "href" in d &&
+                        (d.href.indexOf("http") || ~d.href.indexOf(e.host)) &&
+                        (a.preventDefault(), (e.href = d.href));
+                    },
+                    !1
+                );
+            }
+        })(document, window.navigator, "standalone");
+    </script>
+    <link
+            rel="shortcut icon"
+            href="/favicons/favicon.ico"
+            type="image/x-icon"
+    />
+    <link rel="icon" href="/favicons/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" type="text/css" href="/css/site.css" />
+    <link rel="stylesheet" type="text/css" href="/css/inputs.css" />
+    <script src="/jquery/jquery.min.js"></script>
+    <script src="/js-cookie/js.cookie.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/inputs.js"></script>
+</head>
+<body>
+<div id="coverBackground"></div>
+
+
+<div id="inputScreen">
+    <div id="currInputBig">
+        Current Input:
+    </div>
+    <div id="inputSelectors">
+        <button
+            type="button"
+            id="inputRpi"
+            class="inputButton"
+            name="RPi"
+            aria-label="RPi"
+            >Raspberry Pi</button>
+        <button
+            type="button"
+            id="inputOpt"
+            class="inputButton"
+            name="Opt"
+            aria-label="Opt"
+            >Optical</button>
+        <button
+                type="button"
+                id="inputRCA"
+                class="inputButton"
+                name="RCA"
+                aria-label="RCA"
+        >RCA</button>
+        <button
+                type="button"
+                id="inputHDMI"
+                class="inputButton"
+                name="HDMI"
+                aria-label="HDMI"
+        >HDMI</button>
+        <button
+                type="button"
+                id="inputUSB"
+                class="inputButton"
+                name="USB"
+                aria-label="USB"
+        >USB</button>
+
+    </div>
+</div>
+</body>
+</html>
