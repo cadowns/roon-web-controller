@@ -77,9 +77,9 @@ var bodyParser = require("body-parser");
 var {SerialPort, ReadlineParser} = require("serialport");
 
 
-let serial = new SerialPort({path: "COM5", baudRate:115200});
-let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
-serialParser.on('data', readSerialData);
+
+
+
 
 
 
@@ -292,6 +292,15 @@ function load_browse(listoffset, callback) {
 
 let currInput = "Raspberry Pi";
 let currInputSerial = '!';
+let portList = [];
+let friendlyPortList = [];
+let serialStatus = "Closed";
+
+let serial = new SerialPort({path: 'COM5', baudRate: 115200});
+let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
+serialParser.on('data', readSerialData);
+
+
 
 // ---------------------------- SERIAL STUFF -----------------
 function readSerialData(data){
@@ -326,8 +335,22 @@ function readSerialData(data){
 function writeSerial(data){
   serial.write(data);
 }
+function list(ports){
+  ports.forEach((port) => {
+    portList.push(port.path);
+    friendlyPortList.push(port.friendlyName);
+  });
+  console.log(portList);
+  console.log(friendlyPortList)
+}
+
+SerialPort.list().then(list, err => {
+  process.exit(1);
+})
+
 
 writeSerial('!');
+console.log(portList);
 
 // ---------------------------- WEB SOCKET --------------
 io.on("connection", function(socket) {
@@ -335,7 +358,26 @@ io.on("connection", function(socket) {
   io.emit("zoneList", zoneList);
   io.emit("zoneStatus", zoneStatus);
   io.emit("currInputUpdate", currInput);
+  io.emit("availSerialPorts", portList, friendlyPortList);
+  io.emit("serialStatus", serialStatus);
   console.log("CURRENT INPUT: " + currInput)
+
+  socket.on("openSerial", function(newPort) {
+    serial = new SerialPort({path: newPort, baudRate: 115200});
+    let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
+    serialParser.on('data', readSerialData);
+    serialStatus = newPort + " Open";
+    io.emit("serialStatus", serialStatus)
+    console.log(newPort + " open");
+    });
+
+  socket.on("closeSerial", function(port)  {
+    serial.close();
+    console.log("closed port");
+    serialStatus = "Closed"
+    io.emit("serialStatus", serialStatus)
+  })
+
 
   socket.on("getZone", function() {
     io.emit("zoneStatus", zoneStatus);
