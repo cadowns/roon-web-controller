@@ -418,13 +418,6 @@ io.on("connection", function(socket) {
     transport.control(msg, "stop");
   });
 
-  socket.on("inputRpi", function(msg) {
-    //serial.write("!"); etc
-  });
-
-  socket.on("inputOpt", function(msg) {
-    //serial.write("@"); etc
-  });
 
 });
 
