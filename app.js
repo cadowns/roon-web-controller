@@ -371,7 +371,12 @@ function writeSerial(data){
 function list(ports){
   ports.forEach((port) => {
     portList.push(port.path);
-    friendlyPortList.push(port.friendlyName);
+    if (port.friendlyName = null){
+      friendlyPortList.push(port.path);
+    } else {
+      friendlyPortList.push(port.friendlyName);
+    }
+
   });
   console.log(portList);
   console.log(friendlyPortList)
