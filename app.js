@@ -7,6 +7,8 @@ var pairStatus = 0;
 var zoneStatus = [];
 var zoneList = [];
 
+var serialPortStatus = false;
+
 // Change to working directory
 try {
   process.chdir(__dirname);
@@ -296,13 +298,39 @@ let portList = [];
 let friendlyPortList = [];
 let serialStatus = "Closed";
 
-let serial = new SerialPort({path: 'COM5', baudRate: 115200});
-let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
-serialParser.on('data', readSerialData);
+//let serial = new SerialPort({path: 'COM5', baudRate: 115200});
+//let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
+//serialParser.on('data', readSerialData);
 
 
 
 // ---------------------------- SERIAL STUFF -----------------
+try {
+  serial.on('error', function (err) {
+    console.log('Serial Error: ' + err.message)
+  })
+} catch (e) {
+
+}
+
+
+try {
+  serial.on('open', function () {
+    console.log("Serial port opened!");
+    serialPortStatus = true;
+  });
+} catch (e) {
+}
+
+try {
+  serial.on('close', function () {
+    console.log("Serial port closed!");
+    serialPortStatus = false;
+  });
+} catch (e) {
+}
+
+
 function readSerialData(data){
   switch (data) {
     case "RPi":
@@ -333,7 +361,12 @@ function readSerialData(data){
 }
 
 function writeSerial(data){
-  serial.write(data);
+  try {
+    serial.write(data);
+  } catch (e) {
+    console.log("serial port not open yet");
+  }
+
 }
 function list(ports){
   ports.forEach((port) => {
@@ -362,17 +395,28 @@ io.on("connection", function(socket) {
   io.emit("serialStatus", serialStatus);
   console.log("CURRENT INPUT: " + currInput)
 
-  socket.on("openSerial", function(newPort) {
-    serial = new SerialPort({path: newPort, baudRate: 115200});
-    let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
-    serialParser.on('data', readSerialData);
-    serialStatus = newPort + " Open";
-    io.emit("serialStatus", serialStatus)
-    console.log(newPort + " open");
+  socket.on("openSerial", function(newPort, newBaud) {
+    try {
+      console.log("trying to open new port: " + newPort + " at " + newBaud);
+      let serial = new SerialPort({path: newPort, baudRate: parseInt(newBaud)});
+      let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
+      serialParser.on('data', readSerialData);
+      serialStatus = newPort + " Open";
+      io.emit("serialStatus", serialStatus)
+      console.log(newPort + " open");
+    } catch (e) {
+      console.log("failed to open port");
+    }
+
     });
 
   socket.on("closeSerial", function(port)  {
-    serial.close();
+    try {
+      serial.close();
+    } catch (e) {
+      console.log("unable to close port");
+    }
+
     console.log("closed port");
     serialStatus = "Closed"
     io.emit("serialStatus", serialStatus)
@@ -515,3 +559,5 @@ app.use(
   "/js-cookie/js.cookie.js",
   express.static(__dirname + "/node_modules/js-cookie/src/js.cookie.js")
 );
+
+

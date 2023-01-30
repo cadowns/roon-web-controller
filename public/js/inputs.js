@@ -8,6 +8,8 @@ var inVolumeSlider = false;
 
 let currInput;
 
+let currSerialStatus
+
 $(document).ready(function (){
     console.log("site ready")
     enableSockets();
@@ -134,21 +136,31 @@ function enableSockets() {
     })
 
     socket.on("serialStatus", function(status) {
+        currSerialStatus = status;
+        if (currSerialStatus == "Closed") {
+            $("#inputSelectors :input ").prop("disabled", true);
+        } else {
+            $("#inputSelectors :input ").prop("disabled", false);
+        }
         $("#serialStatusDiv")
-            .html("Current Serial Status: " + status);
+            .html("Current Serial Status: " + currSerialStatus);
     })
 }
 
 var selectedSerial;
+var selectedBaud;
 
 function getSerialSelection(){
     $("#serialOpenBtn").click(function() {
         var newSerial;
+        var newBaud
         newSerial = $("#serialPortList").find(":selected").val();
-        if (selectedSerial != newSerial) {
+        newBaud = $("#baudRateList").find(":selected").val();
+        if ((selectedSerial != newSerial) || (selectedBaud != newBaud)) {
             selectedSerial = newSerial;
-            console.log(newSerial);
-            sendSerialPort(selectedSerial);
+            selectedBaud = newBaud;
+            console.log(newSerial + " at " + newBaud);
+            sendSerialPort(selectedSerial, selectedBaud);
             $("#serialOpenBtn").prop("disabled",true)
             $("#serialCloseBtn").prop("disabled", false)
 
@@ -158,6 +170,8 @@ function getSerialSelection(){
 
 function closeSerialPort() {
     $("#serialCloseBtn").click(function() {
+        selectedBaud = '';
+        selectedSerial = '';
         socket.emit("closeSerial");
         $("#serialOpenBtn").prop("disabled",false)
         $("#serialCloseBtn").prop("disabled", true)
@@ -165,8 +179,8 @@ function closeSerialPort() {
 }
 
 
-function sendSerialPort(port){
-    socket.emit("openSerial", port);
+function sendSerialPort(port, baud){
+    socket.emit("openSerial", port, baud);
 }
 
 function inputHandler() {
