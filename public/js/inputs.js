@@ -126,7 +126,7 @@ function enableSockets() {
             .empty();
         console.log("In function " + portList)
         console.log(friendlyNames);
-        if (friendlyNames.isEmptyObject()) {
+        if (Object.keys(friendlyNames).length == 0) {
             friendlyNames = portList;
         }
         for(var x in portList) {
