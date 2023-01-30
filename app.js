@@ -7,6 +7,8 @@ var pairStatus = 0;
 var zoneStatus = [];
 var zoneList = [];
 
+let serial,serialParser;
+
 var serialPortStatus = false;
 
 // Change to working directory
@@ -305,30 +307,6 @@ let serialStatus = "Closed";
 
 
 // ---------------------------- SERIAL STUFF -----------------
-try {
-  serial.on('error', function (err) {
-    console.log('Serial Error: ' + err.message)
-  })
-} catch (e) {
-
-}
-
-
-try {
-  serial.on('open', function () {
-    console.log("Serial port opened!");
-    serialPortStatus = true;
-  });
-} catch (e) {
-}
-
-try {
-  serial.on('close', function () {
-    console.log("Serial port closed!");
-    serialPortStatus = false;
-  });
-} catch (e) {
-}
 
 
 function readSerialData(data){
@@ -403,8 +381,8 @@ io.on("connection", function(socket) {
   socket.on("openSerial", function(newPort, newBaud) {
     try {
       console.log("trying to open new port: " + newPort + " at " + newBaud);
-      let serial = new SerialPort({path: newPort.toString(), baudRate: parseInt(newBaud)});
-      let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
+      serial = new SerialPort({path: newPort.toString(), baudRate: parseInt(newBaud)});
+      serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
       serialParser.on('data', readSerialData);
       serialStatus = newPort + " Open";
       io.emit("serialStatus", serialStatus)
@@ -418,13 +396,14 @@ io.on("connection", function(socket) {
   socket.on("closeSerial", function(port)  {
     try {
       serial.close();
+      console.log("closed port");
+      serialStatus = "Closed"
+      io.emit("serialStatus", serialStatus)
     } catch (e) {
-      console.log("unable to close port");
+      console.log("unable to close port: " + e);
     }
 
-    console.log("closed port");
-    serialStatus = "Closed"
-    io.emit("serialStatus", serialStatus)
+
   })
 
 
