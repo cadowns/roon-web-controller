@@ -403,7 +403,7 @@ io.on("connection", function(socket) {
   socket.on("openSerial", function(newPort, newBaud) {
     try {
       console.log("trying to open new port: " + newPort + " at " + newBaud);
-      let serial = new SerialPort({path: newPort, baudRate: parseInt(newBaud)});
+      let serial = new SerialPort({path: newPort.toString(), baudRate: parseInt(newBaud)});
       let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
       serialParser.on('data', readSerialData);
       serialStatus = newPort + " Open";
