@@ -125,6 +125,7 @@ function enableSockets() {
         $("#serialPortList")
             .empty();
         console.log("In function " + portList)
+        console.log(friendlyNames);
         for(var x in portList) {
             console.log(x)
             $("#serialPortList")
