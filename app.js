@@ -126,6 +126,7 @@ var roon = new RoonApi({
   // log_level: "none",
   email: "masked",
   website: "https://github.com/pluggemi/roon-web-controller",
+  log_level: "none",
 
   core_paired: function(core_) {
     core = core_;
