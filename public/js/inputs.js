@@ -131,7 +131,8 @@ function enableSockets() {
             $("#serialPortList")
                 .append($('<option>', {
                    value: portList[x],
-                    text: friendlyNames[x]
+                    text: friendlyNames[x],
+                    id: "string"
             }));
         }
     })

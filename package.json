@@ -9,7 +9,9 @@
     "node": ">=6.x"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "build": "node_modules/.bin/parcel build index.html",
+    "dev": "node_modules/.bin/parcel serve index.html"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
@@ -24,8 +26,13 @@
     "node-roon-api-image": "github:roonlabs/node-roon-api-image",
     "node-roon-api-status": "github:roonlabs/node-roon-api-status",
     "node-roon-api-transport": "github:roonlabs/node-roon-api-transport",
+    "parcel-bundler": "^1.12.5",
     "serialport": "^10.5.0",
     "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.8.3",
+    "parcel-bundler": "^1.10.0"
   },
   "repository": {
     "type": "git",

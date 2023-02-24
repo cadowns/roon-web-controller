@@ -6,6 +6,7 @@ var css = [];
 var settings = [];
 var state = [];
 var inVolumeSlider = false;
+var knownZones = [];
 
 $(document).ready(function() {
   showPage();
@@ -193,21 +194,19 @@ function showPage() {
 
 function enableSockets() {
   socket.on("zoneList", function(payload) {
-    $(".zoneList").html("");
+    knownZones = payload;
+    console.log(knownZones)
+    $(".zoneList").empty();
 
     if (payload !== undefined) {
       var payloadids = [];
       for (var x in payload) {
-        $(".zoneList").append(
-          '<button type="button" class="buttonOverlay buttonZoneId" id="button-' +
-            payload[x].zone_id +
-            '" onclick="selectZone(\'' +
-            payload[x].zone_id +
-            "', '" +
-            payload[x].display_name +
-            "')\">" +
-            payload[x].display_name +
-            "</button>"
+        $(".zoneList").append($('<button>', {
+          value: payload[x].zone_id,
+          text: payload[x].display_name,
+          class: "buttonOverlay buttonZoneId",
+          onclick: "selectZone('" + payload[x].zone_id + "')"
+            })
         );
         payloadids.push(payload[x].zone_id);
       }
@@ -235,11 +234,20 @@ function enableSockets() {
   });
 }
 
-function selectZone(zone_id, display_name) {
-  settings.zoneID = zone_id;
+function selectZone(zone_id) {
+
+  console.log(zone_id)
+  var zoneIndex = knownZones.findIndex(zIndex => zIndex.zone_id === zone_id);
+  console.log(zoneIndex)
+  var display_name = knownZones[zoneIndex].display_name
+  console.log(display_name)
+
+
+  console.log("trying to select zone: " + display_name)
+  settings.zoneID = zone_id.toString()
   setCookie("settings['zoneID']", settings.zoneID);
 
-  settings.displayName = display_name;
+  settings.displayName = display_name.toString();
   setCookie("settings['displayName']", settings.displayName);
   $(".buttonZoneName").html(settings.displayName);
 

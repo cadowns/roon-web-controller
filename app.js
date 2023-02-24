@@ -126,7 +126,6 @@ var roon = new RoonApi({
   // log_level: "none",
   email: "masked",
   website: "https://github.com/pluggemi/roon-web-controller",
-  log_level: "none",
 
   core_paired: function(core_) {
     core = core_;
@@ -145,8 +144,10 @@ var roon = new RoonApi({
           var item = {};
           item.zone_id = zone_id;
           item.display_name = display_name;
+          item.disp_name_b64 = escape(display_name);
 
           zoneList.push(item);
+          console.log(item);
           zoneStatus.push(data.zones[x]);
         }
 

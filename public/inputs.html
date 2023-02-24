@@ -85,22 +85,23 @@
         >USB</button>
 
     </div>
-
-    <div id="serialInfo">
-        <form name="serialPorts" id="serialPorts" onsubmit="submitSerial()">
-            Serial Ports: <select name="serialPortList" id="serialPortList">
-            <option value="" selected> Select serial port </option>
-        </select>
-            <select name="baudRateList" id="baudRateList">
-                <option value="9600" >9600 baud</option>
-                <option value="115200" selected>115200 baud</option>
+    <div id="serial">
+        <div id="serialInfo" class="serialContents">
+            <form name="serialPorts" id="serialPorts" onsubmit="submitSerial()">
+                Serial Ports: <select name="serialPortList" id="serialPortList">
+                <option value="" selected> Select serial port </option>
             </select>
-            <input type="button" value="Open" id="serialOpenBtn">
-            <input type="button" value="Close" id="serialCloseBtn" disabled>
-        </form>
-    </div>
-    <div id="serialStatusDiv">
-        Current Serial Status:
+                <select name="baudRateList" id="baudRateList">
+                    <option value="9600" >9600 baud</option>
+                    <option value="115200" selected>115200 baud</option>
+                </select>
+                <input type="button" value="Open" id="serialOpenBtn">
+                <input type="button" value="Close" id="serialCloseBtn" disabled>
+            </form>
+        </div>
+        <div id="serialStatusDiv" class="serialContents">
+            Current Serial Status:
+        </div>
     </div>
 </div>
 </body>
