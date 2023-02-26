@@ -390,7 +390,7 @@ console.log(portList);
 // ---------------------------- WEB SOCKET --------------
 io.on("connection", function(socket) {
   io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
-  //io.emit("coreInfo", coreIP, corePort);
+  io.emit("coreInfo", coreIP, corePort);
   io.emit("zoneList", zoneList);
   io.emit("zoneStatus", zoneStatus);
   io.emit("currInputUpdate", currInput);
