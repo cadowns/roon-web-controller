@@ -130,6 +130,7 @@ var roon = new RoonApi({
 
   core_paired: function(core_) {
     core = core_;
+    console.log(core_);
     coreIP = core.moo.transport.host;
     corePort = core.moo.transport.port;
     console.log("Core network info: " + coreIP + ":" + corePort);
