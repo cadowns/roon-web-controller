@@ -132,9 +132,11 @@ var roon = new RoonApi({
     core = core_;
     coreIP = core.moo.transport.host;
     corePort = core.moo.transport.port;
+    console.log("Core network info: " + coreIP + ":" + corePort);
 
     pairStatus = true;
     io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
+    io.emit("coreInfo", coreIP, corePort);
 
     transport = core_.services.RoonApiTransport;
 
@@ -215,6 +217,8 @@ roon.init_services({
 svc_status.set_status("Extension enabled", false);
 
 roon.start_discovery();
+
+
 
 // Remove duplicates from zoneList array
 function removeDuplicateList(array, property) {
@@ -373,10 +377,14 @@ SerialPort.list().then(list, err => {
 writeSerial('!');
 console.log(portList);
 
+
+
+
+
 // ---------------------------- WEB SOCKET --------------
 io.on("connection", function(socket) {
   io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
-  io.emit("coreInfo", coreIP, corePort);
+  //io.emit("coreInfo", coreIP, corePort);
   io.emit("zoneList", zoneList);
   io.emit("zoneStatus", zoneStatus);
   io.emit("currInputUpdate", currInput);

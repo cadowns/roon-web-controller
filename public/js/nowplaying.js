@@ -235,11 +235,7 @@ function enableSockets() {
     }
   });
 
-  socket.on("coreInfo", function(coreIPin, corePortin) {
-    coreIP = coreIPin;
-    corePort = corePortin;
-    console.log("Core at " + coreIP + ":" + corePort + ". Data sent was " + coreIPin + ":" + corePortin);
-  })
+
 }
 
 function selectZone(zone_id) {

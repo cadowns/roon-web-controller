@@ -26,6 +26,14 @@ $(document).ready(function() {
     }
   });
 
+  socket.on("coreInfo", function(coreIPin, corePortin) {
+    coreIP = coreIPin;
+    corePort = corePortin;
+    setCookie("lastKnownCoreIP", coreIP);
+    setCookie("lastKnownCorePort", corePort);
+    console.log("Core at " + coreIP + ":" + corePort + ". Data sent was " + coreIPin + ":" + corePortin);
+  });
+
 });
 
 function showSection(sectionName) {
