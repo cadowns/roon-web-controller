@@ -7,6 +7,8 @@ var settings = [];
 var state = [];
 var inVolumeSlider = false;
 var knownZones = [];
+var coreIP;
+var corePort;
 
 $(document).ready(function() {
   showPage();
@@ -232,6 +234,11 @@ function enableSockets() {
       }
     }
   });
+
+  socket.on("coreInfo", function(coreIPin, corePortin) {
+    coreIP = coreIPin;
+    corePort = corePortin;
+  })
 }
 
 function selectZone(zone_id) {
@@ -407,14 +414,15 @@ function showIsPlaying(curZone) {
           "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
       }
     }
-    $("#containerCoverImage").html(
-      '<img src="' +
-        state.imgUrl +
-        '" class="itemImage" alt="Cover art for ' +
-        state.title +
-        '">'
-    );
-    $("#coverBackground").css("background-image", "url(" + state.imgUrl + ")");
+    var imageSizeString = "?scale=fit&width=1000&height=1000&format=image/jpeg";
+    var imageString = "http://" + coreIP + ":" + corePort + "/api/image/" + curZone.now_playing.image_key + imageSizeString;
+    console.log(imageString);
+    var albumArt = new Image();
+    albumArt.src = imageString;
+    albumArt.alt = "Album art for " + state.title;
+    albumArt.className = "itemImage";
+    $("#containerCoverImage").append(albumArt);
+    $("#coverBackground").css("background-image", "url(" + imageString + ")");
 
     if (settings.theme == "color") {
       var colorThief = new ColorThief();
