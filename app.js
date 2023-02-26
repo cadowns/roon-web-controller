@@ -23,6 +23,7 @@ try {
 // Read command line options
 var commandLineArgs = require("command-line-args");
 var getUsage = require("command-line-usage");
+var util = require('util');
 
 var optionDefinitions = [
   {
@@ -130,7 +131,7 @@ var roon = new RoonApi({
 
   core_paired: function(core_) {
     core = core_;
-    console.log(core_);
+    console.log(util.inspect(core_));
     coreIP = core.moo.transport.host;
     corePort = core.moo.transport.port;
     let apiEndpoint = core.moo.transport.ws._url;
