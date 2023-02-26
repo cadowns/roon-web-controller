@@ -133,7 +133,12 @@ var roon = new RoonApi({
     console.log(core_);
     coreIP = core.moo.transport.host;
     corePort = core.moo.transport.port;
+    let apiEndpoint = core.moo.transport.ws._url;
+    let netInfo = core.moo.transport.moo.transport.host;
     console.log("Core network info: " + coreIP + ":" + corePort);
+    console.log("API Endpoint: " + apiEndpoint);
+    console.log("URL? " + netInfo);
+
 
     pairStatus = true;
     io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
