@@ -8,7 +8,7 @@ var zoneStatus = [];
 var zoneList = [];
 
 let serial,serialParser;
-let coreIP,corePort;
+let coreIP;
 
 var serialPortStatus = false;
 
@@ -131,19 +131,14 @@ var roon = new RoonApi({
 
   core_paired: function(core_) {
     core = core_;
-    console.log(util.inspect(core_));
-    coreIP = core.moo.transport.host;
-    corePort = core.moo.transport.port;
-    let apiEndpoint = core.moo.transport.ws._url;
-    let netInfo = core.moo.transport.moo.transport.host;
-    console.log("Core network info: " + coreIP + ":" + corePort);
-    console.log("API Endpoint: " + apiEndpoint);
-    console.log("URL? " + netInfo);
+    coreIP = core.moo.transport.ws.url;
+    coreIP = coreIP.substring(5);
+    console.log("Core network info: " + coreIP);
 
 
     pairStatus = true;
     io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
-    io.emit("coreInfo", coreIP, corePort);
+    io.emit("coreInfo", coreIP);
 
     transport = core_.services.RoonApiTransport;
 
@@ -391,7 +386,7 @@ console.log(portList);
 // ---------------------------- WEB SOCKET --------------
 io.on("connection", function(socket) {
   io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
-  io.emit("coreInfo", coreIP, corePort);
+  io.emit("coreInfo", coreIP);
   io.emit("zoneList", zoneList);
   io.emit("zoneStatus", zoneStatus);
   io.emit("currInputUpdate", currInput);

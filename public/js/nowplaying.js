@@ -8,7 +8,6 @@ var state = [];
 var inVolumeSlider = false;
 var knownZones = [];
 var coreIP;
-var corePort;
 
 $(document).ready(function() {
   showPage();
@@ -235,12 +234,9 @@ function enableSockets() {
     }
   });
 
-  socket.on("coreInfo", function(coreIPin, corePortin) {
+  socket.on("coreInfo", function(coreIPin) {
     coreIP = coreIPin;
-    corePort = corePortin;
-    setCookie("lastKnownCoreIP", coreIP);
-    setCookie("lastKnownCorePort", corePort);
-    console.log("Core at " + coreIP + ":" + corePort + ". Data sent was " + coreIPin + ":" + corePortin);
+    console.log("Core at " + coreIP  + ". Data sent was " + coreIPin);
   });
 
 }
@@ -419,7 +415,7 @@ function showIsPlaying(curZone) {
       }
     }
     var imageSizeString = "?scale=fit&width=1000&height=1000&format=image/jpeg";
-    var imageString = "http://" + coreIP + ":" + corePort + "/api/image/" + curZone.now_playing.image_key + imageSizeString;
+    var imageString = "http://" + coreIP + "/image/" + curZone.now_playing.image_key + imageSizeString;
     console.log(imageString);
     var albumArt = new Image();
     albumArt.src = imageString;
