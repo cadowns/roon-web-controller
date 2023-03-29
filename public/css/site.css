@@ -25,6 +25,10 @@ svg {
     fill: currentColor;
 }
 
+.svgRefresh {
+    fill: white;
+}
+
 .buttonOverlay {
     width: 96px;
     height: 48px;

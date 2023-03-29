@@ -8,6 +8,7 @@ var state = [];
 var inVolumeSlider = false;
 var knownZones = [];
 var coreIP;
+let currInput;
 
 $(document).ready(function() {
   showPage();
@@ -217,7 +218,9 @@ function enableSockets() {
     }
   });
 
-  socket.on("zoneStatus", function(payload) {
+  socket.on("zoneStatus", function(payload, inputVar) {
+    currInput = inputVar;
+    console.log("Zone Status: " + inputVar);
     if (settings.zoneID !== undefined) {
       for (var x in payload) {
         if (payload[x].zone_id == settings.zoneID) {
@@ -226,7 +229,8 @@ function enableSockets() {
           $(".buttonZoneId").removeClass("buttonSettingActive");
           $("#button-" + settings.zoneID).addClass("buttonSettingActive");
 
-          updateZone(curZone);
+          //updateZone(curZone);
+          roonOrLocal(curZone, currInput);
         } else {
           curZone = undefined;
         }
@@ -239,7 +243,17 @@ function enableSockets() {
     console.log("Core at " + coreIP  + ". Data sent was " + coreIPin);
   });
 
+  socket.on("currInputUpdate", function(currInputUpdate) {
+    currInput = currInputUpdate;
+    //roonOrLocal(curZone, currInput);
+  });
+
+  socket.on("changeInput", function(inputChar,currInputUpdate) {
+    currInput = currInputUpdate;
+    //roonOrLocal(curZone, currInput);
+  });
 }
+
 
 function selectZone(zone_id) {
 
@@ -269,17 +283,65 @@ function selectZone(zone_id) {
   $("#overlayZoneList").hide();
 }
 
-function updateZone(curZone) {
-  if (curZone.now_playing) {
-    showIsPlaying(curZone);
+function roonOrLocal(curZone,input){
+  if (input == "Raspberry Pi") {
+    updateZone(curZone);
   } else {
-    showNotPlaying();
+    showNonRoonStatus(input);
+  }
+}
+
+function updateZone(curZone) {
+    if (curZone.now_playing) {
+      showIsPlaying(curZone);
+    } else {
+      showNotPlaying();
+    }
+}
+
+function showNonRoonStatus(input) {
+
+  $("#line2").hide();
+  $("#line3").hide();
+  $("#controlsPlayer").hide();
+  $("#containerTrackSeek").hide();
+  $("#controlsSettings").hide();
+  $("#containerZoneList").hide();
+  $("#containerCoverImage").empty();
+  $("#coverBackground").css("background-image", "url('/img/transparent.png')");
+
+  switch (input) {
+    case "Optical":
+      console.log("Optical case");
+      $("#line1").html("Optical");
+      var art = new Image;
+      art.src = "/img/optical.png";
+      art.className = "itemImage";
+      $("#containerCoverImage").append(art);
+      break;
+
+    case "RCA":
+      Console.log("RCA case");
+      $("#line1").html("Coaxial");
+      var art = new Image;
+      //art.src = "/img/optical.png";
+      art.className = "itemImage";
+      $("#containerCoverImage").append(art);
+      break;
+
   }
 }
 
 function showNotPlaying() {
   $("#notPlaying").show();
   $("#isPlaying").hide();
+
+  $("#line2").show();
+  $("#line3").show();
+  $("#controlsPlayer").show();
+  $("#containerTrackSeek").show();
+  $("#controlsSettings").show();
+  $("#containerZoneList").show();
 
   // Reset icons
   $("#controlPrev")
@@ -328,439 +390,455 @@ function showNotPlaying() {
 function showIsPlaying(curZone) {
   $("#notPlaying").hide();
   $("#isPlaying").show();
+  
+  $("#line2").show();
+  $("#line3").show();
+  $("#controlsPlayer").show();
+  $("#containerTrackSeek").show();
+  $("#controlsSettings").show();
+  $("#containerZoneList").show();
 
-  if (state.line1 != curZone.now_playing.three_line.line1) {
-    state.line1 = curZone.now_playing.three_line.line1;
-    console.log(state.line1)
-    fixFontSize();
-    $("#line1")
-      .html(state.line1)
-      .simplemarquee({
-        cycles: Infinity,
-        delayBetweenCycles: 5000,
-        handleHover: false
-      });
-  }
 
-  if (state.line2 != curZone.now_playing.three_line.line2) {
-    state.line2 = curZone.now_playing.three_line.line2;
-    $("#line2")
-      .html(curZone.now_playing.three_line.line2)
-      .simplemarquee({
-        cycles: Infinity,
-        delayBetweenCycles: 5000,
-        handleHover: false
-      });
-  }
-
-  if (state.line3 != curZone.now_playing.three_line.line3) {
-    state.line3 = curZone.now_playing.three_line.line3;
-    $("#line3")
-      .html(curZone.now_playing.three_line.line3)
-      .simplemarquee({
-        cycles: Infinity,
-        delayBetweenCycles: 5000,
-        handleHover: false
-      });
-  }
-
-  if (state.title != curZone.now_playing.one_line.line1) {
-    state.title = curZone.now_playing.one_line.line1;
-    $(document).prop("title", curZone.now_playing.one_line.line1);
-    if (settings.showNotifications === true) {
-      notifyMe(curZone.now_playing.three_line);
-    }
-  }
-
-  if (settings.showNotificationsChanged === true) {
-    if (settings.showNotifications === true) {
-      notifyMe(curZone.now_playing.three_line);
-    }
-    settings.showNotificationsChanged = false;
-  }
-
-  if (curZone.is_seek_allowed === true) {
-    $("#seekPosition").html(secondsConvert(curZone.now_playing.seek_position));
-    $("#seekLength").html(secondsConvert(curZone.now_playing.length));
-    $("#trackSeekValue").css(
-      "width",
-      Math.round(
-        (curZone.now_playing.seek_position / curZone.now_playing.length) * 100
-      ) + "%"
-    );
-  } else {
-    $("#seekPosition, #seekLength").html("&nbsp;");
-    $("#trackSeekValue").css("width", "0%");
-  }
-
-  if (
-    state.image_key != curZone.now_playing.image_key ||
-    state.image_key === undefined
-  ) {
-    state.image_key = curZone.now_playing.image_key;
-
-    if (curZone.now_playing.image_key === undefined) {
-      state.imgUrl = "/img/transparent.png";
-    } else {
-      if (settings.use4kImages === true) {
-        state.imgUrl =
-          "/roonapi/getImage4k?image_key=" + curZone.now_playing.image_key;
-        state.CTimgUrl =
-          "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
-      } else {
-        state.imgUrl =
-          "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
-        state.CTimgUrl =
-          "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
+      if (state.line1 != curZone.now_playing.three_line.line1) {
+        state.line1 = curZone.now_playing.three_line.line1;
+        console.log(state.line1)
+        fixFontSize();
+        $("#line1")
+            .html(state.line1)
+            .simplemarquee({
+              cycles: Infinity,
+              delayBetweenCycles: 5000,
+              handleHover: false
+            });
       }
-    }
-    var imageSizeString = "?scale=fit&width=1000&height=1000&format=image/jpeg";
-    var imageString = "http://" + coreIP + "/image/" + curZone.now_playing.image_key + imageSizeString;
-    console.log(imageString);
-    var albumArt = new Image();
-    albumArt.src = imageString;
-    albumArt.alt = "Album art for " + state.title;
-    albumArt.className = "itemImage";
-    $("#containerCoverImage").append(albumArt);
-    $("#coverBackground").css("background-image", "url(" + imageString + ")");
 
-    if (settings.theme == "color") {
-      var colorThief = new ColorThief();
+      if (state.line2 != curZone.now_playing.three_line.line2) {
+        state.line2 = curZone.now_playing.three_line.line2;
+        $("#line2")
+            .html(curZone.now_playing.three_line.line2)
+            .simplemarquee({
+              cycles: Infinity,
+              delayBetweenCycles: 5000,
+              handleHover: false
+            });
+      }
 
-      colorThief.getColorAsync(state.CTimgUrl, function(color) {
-        var r = color[0];
-        var g = color[1];
-        var b = color[2];
-        css.colorBackground = "rgb(" + color + ")";
+      if (state.line3 != curZone.now_playing.three_line.line3) {
+        state.line3 = curZone.now_playing.three_line.line3;
+        $("#line3")
+            .html(curZone.now_playing.three_line.line3)
+            .simplemarquee({
+              cycles: Infinity,
+              delayBetweenCycles: 5000,
+              handleHover: false
+            });
+      }
 
-        var yiq = (r * 299 + g * 587 + b * 114) / 1000;
-        if (yiq >= 128) {
-          css.backgroundColor = "#eff0f1";
-          css.foregroundColor = "#232629";
-          css.trackSeek = "rgba(35, 38, 41, 0.33)";
-        } else {
-          css.backgroundColor = "#232629";
-          css.foregroundColor = "#eff0f1";
-          css.trackSeek = "rgba(239, 240, 241, 0.33)";
+      if (state.title != curZone.now_playing.one_line.line1) {
+        state.title = curZone.now_playing.one_line.line1;
+        $(document).prop("title", curZone.now_playing.one_line.line1);
+        if (settings.showNotifications === true) {
+          notifyMe(curZone.now_playing.three_line);
         }
-        $("#colorBackground").show();
-        showTheme("color");
-      });
-    }
-  }
+      }
 
-  if (state.Prev != curZone.is_previous_allowed || state.Prev === undefined) {
-    state.Prev = curZone.is_previous_allowed;
-    if (curZone.is_previous_allowed === true) {
-      $("#controlPrev")
-        .attr("onclick", "goCmd('prev', '" + curZone.zone_id + "')")
-        .attr("aria-disabled", false)
-        .html(getSVG("prev"))
-        .addClass("buttonAvailable")
-        .removeClass("buttonInactive");
-    } else {
-      $("#controlPrev")
-        .attr("onclick", "")
-        .attr("aria-disabled", true)
-        .html(getSVG("prev"))
-        .addClass("buttonInactive")
-        .removeClass("buttonAvailable");
-    }
-  }
+      if (settings.showNotificationsChanged === true) {
+        if (settings.showNotifications === true) {
+          notifyMe(curZone.now_playing.three_line);
+        }
+        settings.showNotificationsChanged = false;
+      }
 
-  if (state.Next != curZone.is_next_allowed || state.Next === undefined) {
-    state.Next = curZone.is_next_allowed;
-    if (curZone.is_next_allowed === true) {
-      $("#controlNext")
-        .attr("onclick", "goCmd('next', '" + curZone.zone_id + "')")
-        .attr("aria-disabled", false)
-        .html(getSVG("next"))
-        .addClass("buttonAvailable")
-        .removeClass("buttonInactive");
-    } else {
-      $("#controlNext")
-        .attr("onclick", "")
-        .attr("aria-disabled", true)
-        .html(getSVG("next"))
-        .addClass("buttonInactive")
-        .removeClass("buttonAvailable");
-    }
-  }
-
-  if (curZone.is_play_allowed === true) {
-    state.PlayPauseStop = "showPlay";
-    noSleep.disable();
-  } else if (curZone.state == "playing" && curZone.is_play_allowed === false) {
-    if (curZone.is_pause_allowed === true) {
-      state.PlayPauseStop = "showPause";
-      if (settings.screensaverDisable === true) {
-        noSleep.enable();
+      if (curZone.is_seek_allowed === true) {
+        $("#seekPosition").html(secondsConvert(curZone.now_playing.seek_position));
+        $("#seekLength").html(secondsConvert(curZone.now_playing.length));
+        $("#trackSeekValue").css(
+            "width",
+            Math.round(
+                (curZone.now_playing.seek_position / curZone.now_playing.length) * 100
+            ) + "%"
+        );
       } else {
+        $("#seekPosition, #seekLength").html("&nbsp;");
+        $("#trackSeekValue").css("width", "0%");
+      }
+
+      if (
+          state.image_key != curZone.now_playing.image_key ||
+          state.image_key === undefined
+      ) {
+        state.image_key = curZone.now_playing.image_key;
+
+        if (curZone.now_playing.image_key === undefined) {
+          state.imgUrl = "/img/transparent.png";
+        } else {
+          if (settings.use4kImages === true) {
+            state.imgUrl =
+                "/roonapi/getImage4k?image_key=" + curZone.now_playing.image_key;
+            state.CTimgUrl =
+                "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
+          } else {
+            state.imgUrl =
+                "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
+            state.CTimgUrl =
+                "/roonapi/getImage?image_key=" + curZone.now_playing.image_key;
+          }
+        }
+
+        var imageSizeString = "?scale=fit&width=1000&height=1000&format=image/jpeg";
+        var imageString = "http://" + coreIP + "/image/" + curZone.now_playing.image_key + imageSizeString;
+        console.log(imageString);
+        var albumArt = new Image();
+        albumArt.src = imageString;
+        albumArt.alt = "Album art for " + state.title;
+        albumArt.className = "itemImage";
+        $("#containerCoverImage").empty();
+        $("#coverBackground").empty();
+        $("#containerCoverImage").append(albumArt);
+        $("#coverBackground").css("background-image", "url(" + imageString + ")");
+
+        if (settings.theme == "color") {
+          var colorThief = new ColorThief();
+
+          colorThief.getColorAsync(state.CTimgUrl, function(color) {
+            var r = color[0];
+            var g = color[1];
+            var b = color[2];
+            css.colorBackground = "rgb(" + color + ")";
+
+            var yiq = (r * 299 + g * 587 + b * 114) / 1000;
+            if (yiq >= 128) {
+              css.backgroundColor = "#eff0f1";
+              css.foregroundColor = "#232629";
+              css.trackSeek = "rgba(35, 38, 41, 0.33)";
+            } else {
+              css.backgroundColor = "#232629";
+              css.foregroundColor = "#eff0f1";
+              css.trackSeek = "rgba(239, 240, 241, 0.33)";
+            }
+            $("#colorBackground").show();
+            showTheme("color");
+          });
+        }
+      }
+
+      if (state.Prev != curZone.is_previous_allowed || state.Prev === undefined) {
+        state.Prev = curZone.is_previous_allowed;
+        if (curZone.is_previous_allowed === true) {
+          $("#controlPrev")
+              .attr("onclick", "goCmd('prev', '" + curZone.zone_id + "')")
+              .attr("aria-disabled", false)
+              .html(getSVG("prev"))
+              .addClass("buttonAvailable")
+              .removeClass("buttonInactive");
+        } else {
+          $("#controlPrev")
+              .attr("onclick", "")
+              .attr("aria-disabled", true)
+              .html(getSVG("prev"))
+              .addClass("buttonInactive")
+              .removeClass("buttonAvailable");
+        }
+      }
+
+      if (state.Next != curZone.is_next_allowed || state.Next === undefined) {
+        state.Next = curZone.is_next_allowed;
+        if (curZone.is_next_allowed === true) {
+          $("#controlNext")
+              .attr("onclick", "goCmd('next', '" + curZone.zone_id + "')")
+              .attr("aria-disabled", false)
+              .html(getSVG("next"))
+              .addClass("buttonAvailable")
+              .removeClass("buttonInactive");
+        } else {
+          $("#controlNext")
+              .attr("onclick", "")
+              .attr("aria-disabled", true)
+              .html(getSVG("next"))
+              .addClass("buttonInactive")
+              .removeClass("buttonAvailable");
+        }
+      }
+
+      if (curZone.is_play_allowed === true) {
+        state.PlayPauseStop = "showPlay";
+        noSleep.disable();
+      } else if (curZone.state == "playing" && curZone.is_play_allowed === false) {
+        if (curZone.is_pause_allowed === true) {
+          state.PlayPauseStop = "showPause";
+          if (settings.screensaverDisable === true) {
+            noSleep.enable();
+          } else {
+            noSleep.disable();
+          }
+        } else {
+          state.PlayPauseStop = "showStop";
+          if (settings.screensaverDisable === true) {
+            noSleep.enable();
+          } else {
+            noSleep.disable();
+          }
+        }
+      } else {
+        state.PlayPauseStop = "showPlayDisabled";
         noSleep.disable();
       }
-    } else {
-      state.PlayPauseStop = "showStop";
-      if (settings.screensaverDisable === true) {
-        noSleep.enable();
-      } else {
-        noSleep.disable();
+
+      if (
+          state.PlayPauseStopLast != state.PlayPauseStop ||
+          state.PlayPauseStop === undefined
+      ) {
+        state.PlayPauseStopLast = state.PlayPauseStop;
+        if (state.PlayPauseStop == "showPlay") {
+          $("#controlPlayPauseStop")
+              .attr("onclick", "goCmd('play', '" + curZone.zone_id + "')")
+              .attr("aria-disabled", false)
+              .html(getSVG("play"))
+              .addClass("buttonAvailable")
+              .removeClass("buttonInactive");
+        } else if (state.PlayPauseStop == "showPause") {
+          $("#controlPlayPauseStop")
+              .attr("onclick", "goCmd('pause', '" + curZone.zone_id + "')")
+              .attr("aria-disabled", false)
+              .html(getSVG("pause"))
+              .addClass("buttonAvailable")
+              .removeClass("buttonInactive");
+        } else if (state.PlayPauseStop == "showStop") {
+          $("#controlPlayPauseStop")
+              .attr("onclick", "goCmd('stop', '" + curZone.zone_id + "')")
+              .attr("aria-disabled", false)
+              .html(getSVG("stop"))
+              .addClass("buttonAvailable")
+              .removeClass("buttonInactive");
+        } else if (state.PlayPauseStop == "showPlayDisabled") {
+          $("#controlPlayPauseStop")
+              .html(getSVG("play"))
+              .attr("onclick", "")
+              .attr("aria-disabled", true)
+              .addClass("buttonInactive")
+              .removeClass("buttonAvailable");
+        }
       }
-    }
-  } else {
-    state.PlayPauseStop = "showPlayDisabled";
-    noSleep.disable();
-  }
 
-  if (
-    state.PlayPauseStopLast != state.PlayPauseStop ||
-    state.PlayPauseStop === undefined
-  ) {
-    state.PlayPauseStopLast = state.PlayPauseStop;
-    if (state.PlayPauseStop == "showPlay") {
-      $("#controlPlayPauseStop")
-        .attr("onclick", "goCmd('play', '" + curZone.zone_id + "')")
-        .attr("aria-disabled", false)
-        .html(getSVG("play"))
-        .addClass("buttonAvailable")
-        .removeClass("buttonInactive");
-    } else if (state.PlayPauseStop == "showPause") {
-      $("#controlPlayPauseStop")
-        .attr("onclick", "goCmd('pause', '" + curZone.zone_id + "')")
-        .attr("aria-disabled", false)
-        .html(getSVG("pause"))
-        .addClass("buttonAvailable")
-        .removeClass("buttonInactive");
-    } else if (state.PlayPauseStop == "showStop") {
-      $("#controlPlayPauseStop")
-        .attr("onclick", "goCmd('stop', '" + curZone.zone_id + "')")
-        .attr("aria-disabled", false)
-        .html(getSVG("stop"))
-        .addClass("buttonAvailable")
-        .removeClass("buttonInactive");
-    } else if (state.PlayPauseStop == "showPlayDisabled") {
-      $("#controlPlayPauseStop")
-        .html(getSVG("play"))
-        .attr("onclick", "")
-        .attr("aria-disabled", true)
-        .addClass("buttonInactive")
-        .removeClass("buttonAvailable");
-    }
-  }
-
-  if (state.Loop != curZone.settings.loop || state.Loop === undefined) {
-    state.Loop = curZone.settings.loop;
-    if (state.Loop == "disabled") {
-      $("#buttonLoop")
-        .html(getSVG("loop"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('loop', 'loop', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Loop off")
-        .attr("aria-label", "Loop off")
-        .attr("aria-disabled", false)
-        .removeClass("buttonActive buttonInactive")
-        .addClass("buttonAvailable")
-        .css("color", css.foregroundColor);
-    } else if (state.Loop == "loop_one") {
-      $("#buttonLoop")
-        .html(getSVG("loopOne"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('loop', 'disabled', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Loop one")
-        .attr("aria-label", "Loop one")
-        .attr("aria-disabled", false)
-        .removeClass("buttonAvailable buttonInactive")
-        .addClass("buttonActive")
-        .css("color", "#3daee9");
-    } else if (state.Loop == "loop") {
-      $("#buttonLoop")
-        .html(getSVG("loop"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('loop', 'loop_one', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Loop all")
-        .attr("aria-label", "Loop all")
-        .attr("aria-disabled", false)
-        .removeClass("buttonAvailable buttonInactive")
-        .addClass("buttonActive")
-        .css("color", "#3daee9");
-    } else {
-      $("#buttonLoop")
-        .html(getSVG("loop"))
-        .attr("onclick", "")
-        .attr("name", "Loop disabled")
-        .attr("aria-label", "Loop disabled")
-        .attr("aria-disabled", true)
-        .removeClass("buttonAvailable buttonActive")
-        .addClass("buttonInactive")
-        .css("color", css.foregroundColor);
-    }
-  }
-
-  if (
-    state.Shuffle != curZone.settings.shuffle ||
-    state.Shuffle === undefined
-  ) {
-    state.Shuffle = curZone.settings.shuffle;
-    if (state.Shuffle === false) {
-      $("#buttonShuffle")
-        .html(getSVG("shuffle"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('shuffle', 'true', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Shuffle off")
-        .attr("aria-label", "Shuffle off")
-        .attr("aria-disabled", false)
-        .removeClass("buttonActive buttonInactive")
-        .addClass("buttonAvailable")
-        .css("color", css.foregroundColor);
-    } else if (state.Shuffle === true) {
-      $("#buttonShuffle")
-        .html(getSVG("shuffle"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('shuffle', 'false', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Shuffle on")
-        .attr("aria-label", "Shuffle on")
-        .attr("aria-disabled", false)
-        .removeClass("buttonAvailable buttonInactive")
-        .addClass("buttonActive")
-        .css("color", "#3daee9");
-    } else {
-      $("#buttonShuffle")
-        .html(getSVG("shuffle"))
-        .attr("onclick", "")
-        .attr("name", "Shuffle disabled")
-        .attr("aria-label", "Shuffle disabled")
-        .attr("aria-disabled", true)
-        .removeClass("buttonAvailable buttonActive")
-        .addClass("buttonInactive")
-        .css("color", css.foregroundColor);
-    }
-  }
-
-  if (state.Radio != curZone.settings.auto_radio || state.Radio === undefined) {
-    state.Radio = curZone.settings.auto_radio;
-    if (state.Radio === false) {
-      $("#buttonRadio")
-        .html(getSVG("radio"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('auto_radio', 'true', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Roon Radio off")
-        .attr("aria-label", "Roon Radio off")
-        .attr("aria-disabled", false)
-        .removeClass("buttonActive buttonInactive")
-        .addClass("buttonAvailable")
-        .css("color", css.foregroundColor);
-    } else if (state.Radio === true) {
-      $("#buttonRadio")
-        .html(getSVG("radio"))
-        .attr(
-          "onclick",
-          "changeZoneSetting('auto_radio', 'false', '" + curZone.zone_id + "')"
-        )
-        .attr("name", "Roon Radio on")
-        .attr("aria-label", "Roon Radio on")
-        .attr("aria-disabled", false)
-        .removeClass("buttonAvailable buttonInactive")
-        .addClass("buttonActive")
-        .css("color", "#3daee9");
-    } else {
-      $("#buttonRadio")
-        .html(getSVG("radio"))
-        .attr("onclick", "")
-        .attr("name", "Roon Radio disabled")
-        .attr("aria-label", "Roon Radio disabled")
-        .attr("aria-disabled", true)
-        .removeClass("buttonAvailable buttonActive")
-        .addClass("buttonInactive")
-        .css("color", css.foregroundColor);
-    }
-  }
-
-  if (inVolumeSlider === false) {
-    $("#volumeList").html("");
-    for (var x in curZone.outputs) {
-      if (x >= 1) {
-        $("#volumeList").append("<hr>");
+      if (state.Loop != curZone.settings.loop || state.Loop === undefined) {
+        state.Loop = curZone.settings.loop;
+        if (state.Loop == "disabled") {
+          $("#buttonLoop")
+              .html(getSVG("loop"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('loop', 'loop', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Loop off")
+              .attr("aria-label", "Loop off")
+              .attr("aria-disabled", false)
+              .removeClass("buttonActive buttonInactive")
+              .addClass("buttonAvailable")
+              .css("color", css.foregroundColor);
+        } else if (state.Loop == "loop_one") {
+          $("#buttonLoop")
+              .html(getSVG("loopOne"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('loop', 'disabled', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Loop one")
+              .attr("aria-label", "Loop one")
+              .attr("aria-disabled", false)
+              .removeClass("buttonAvailable buttonInactive")
+              .addClass("buttonActive")
+              .css("color", "#3daee9");
+        } else if (state.Loop == "loop") {
+          $("#buttonLoop")
+              .html(getSVG("loop"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('loop', 'loop_one', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Loop all")
+              .attr("aria-label", "Loop all")
+              .attr("aria-disabled", false)
+              .removeClass("buttonAvailable buttonInactive")
+              .addClass("buttonActive")
+              .css("color", "#3daee9");
+        } else {
+          $("#buttonLoop")
+              .html(getSVG("loop"))
+              .attr("onclick", "")
+              .attr("name", "Loop disabled")
+              .attr("aria-label", "Loop disabled")
+              .attr("aria-disabled", true)
+              .removeClass("buttonAvailable buttonActive")
+              .addClass("buttonInactive")
+              .css("color", css.foregroundColor);
+        }
       }
-      if (curZone.outputs[x].volume) {
-        var html =
-          '<div class="textBold">' + curZone.outputs[x].display_name + "</div>";
-        html += "<div>" + curZone.outputs[x].volume.value + "</div>";
 
-        html += '<div class="volumeGroup">';
-        html += '<button type="button" class="buttonFillHeight volumeButton"';
-        html +=
-          "onclick=\"volumeButton('volumeValue" +
-          x +
-          "', " +
-          (curZone.outputs[x].volume.value - curZone.outputs[x].volume.step) +
-          ", '" +
-          curZone.outputs[x].output_id +
-          "')\"";
-        html += 'name="Volume down"';
-        html += 'aria-label="Volume down"';
-        html += ">" + getSVG("volume-minus") + "</button>";
-        html += '<div class="volumeSlider">';
-        html +=
-          '<input type="range" min="' +
-          curZone.outputs[x].volume.min +
-          '"  max="' +
-          curZone.outputs[x].volume.max +
-          '" step="' +
-          curZone.outputs[x].volume.step +
-          '" value="' +
-          curZone.outputs[x].volume.value +
-          '" oninput="volumeInput(\'volumeValue' +
-          x +
-          "', this.value, '" +
-          curZone.outputs[x].output_id +
-          "')\" onchange=\"volumeChange('volumeValue" +
-          x +
-          "', this.value, '" +
-          curZone.outputs[x].output_id +
-          "')\">";
-        html += "</div>";
-        html += '<button type="button" class="buttonFillHeight volumeButton"';
-        html +=
-          "onclick=\"volumeButton('volumeValue" +
-          x +
-          "', " +
-          (curZone.outputs[x].volume.value + curZone.outputs[x].volume.step) +
-          ", '" +
-          curZone.outputs[x].output_id +
-          "')\"";
-        html += 'name="Volume up"';
-        html += 'aria-label="Volume up"';
-        html += ">" + getSVG("volume-plus") + "</button>";
-        html += "</div>";
-
-        $("#volumeList").append(html);
-      } else {
-        $("#volumeList")
-          .append(
-            '<div class="textBold">' +
-              curZone.outputs[x].display_name +
-              "</div>"
-          )
-          .append("<div>Fixed Volume</div>");
+      if (
+          state.Shuffle != curZone.settings.shuffle ||
+          state.Shuffle === undefined
+      ) {
+        state.Shuffle = curZone.settings.shuffle;
+        if (state.Shuffle === false) {
+          $("#buttonShuffle")
+              .html(getSVG("shuffle"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('shuffle', 'true', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Shuffle off")
+              .attr("aria-label", "Shuffle off")
+              .attr("aria-disabled", false)
+              .removeClass("buttonActive buttonInactive")
+              .addClass("buttonAvailable")
+              .css("color", css.foregroundColor);
+        } else if (state.Shuffle === true) {
+          $("#buttonShuffle")
+              .html(getSVG("shuffle"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('shuffle', 'false', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Shuffle on")
+              .attr("aria-label", "Shuffle on")
+              .attr("aria-disabled", false)
+              .removeClass("buttonAvailable buttonInactive")
+              .addClass("buttonActive")
+              .css("color", "#3daee9");
+        } else {
+          $("#buttonShuffle")
+              .html(getSVG("shuffle"))
+              .attr("onclick", "")
+              .attr("name", "Shuffle disabled")
+              .attr("aria-label", "Shuffle disabled")
+              .attr("aria-disabled", true)
+              .removeClass("buttonAvailable buttonActive")
+              .addClass("buttonInactive")
+              .css("color", css.foregroundColor);
+        }
       }
-    }
-  }
 
-  if (state.themeShowing === undefined) {
-    state.themeShowing = true;
-    showTheme(settings.theme);
-  }
+      if (state.Radio != curZone.settings.auto_radio || state.Radio === undefined) {
+        state.Radio = curZone.settings.auto_radio;
+        if (state.Radio === false) {
+          $("#buttonRadio")
+              .html(getSVG("radio"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('auto_radio', 'true', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Roon Radio off")
+              .attr("aria-label", "Roon Radio off")
+              .attr("aria-disabled", false)
+              .removeClass("buttonActive buttonInactive")
+              .addClass("buttonAvailable")
+              .css("color", css.foregroundColor);
+        } else if (state.Radio === true) {
+          $("#buttonRadio")
+              .html(getSVG("radio"))
+              .attr(
+                  "onclick",
+                  "changeZoneSetting('auto_radio', 'false', '" + curZone.zone_id + "')"
+              )
+              .attr("name", "Roon Radio on")
+              .attr("aria-label", "Roon Radio on")
+              .attr("aria-disabled", false)
+              .removeClass("buttonAvailable buttonInactive")
+              .addClass("buttonActive")
+              .css("color", "#3daee9");
+        } else {
+          $("#buttonRadio")
+              .html(getSVG("radio"))
+              .attr("onclick", "")
+              .attr("name", "Roon Radio disabled")
+              .attr("aria-label", "Roon Radio disabled")
+              .attr("aria-disabled", true)
+              .removeClass("buttonAvailable buttonActive")
+              .addClass("buttonInactive")
+              .css("color", css.foregroundColor);
+        }
+      }
+
+      if (inVolumeSlider === false) {
+        $("#volumeList").html("");
+        for (var x in curZone.outputs) {
+          if (x >= 1) {
+            $("#volumeList").append("<hr>");
+          }
+          if (curZone.outputs[x].volume) {
+            var html =
+                '<div class="textBold">' + curZone.outputs[x].display_name + "</div>";
+            html += "<div>" + curZone.outputs[x].volume.value + "</div>";
+
+            html += '<div class="volumeGroup">';
+            html += '<button type="button" class="buttonFillHeight volumeButton"';
+            html +=
+                "onclick=\"volumeButton('volumeValue" +
+                x +
+                "', " +
+                (curZone.outputs[x].volume.value - curZone.outputs[x].volume.step) +
+                ", '" +
+                curZone.outputs[x].output_id +
+                "')\"";
+            html += 'name="Volume down"';
+            html += 'aria-label="Volume down"';
+            html += ">" + getSVG("volume-minus") + "</button>";
+            html += '<div class="volumeSlider">';
+            html +=
+                '<input type="range" min="' +
+                curZone.outputs[x].volume.min +
+                '"  max="' +
+                curZone.outputs[x].volume.max +
+                '" step="' +
+                curZone.outputs[x].volume.step +
+                '" value="' +
+                curZone.outputs[x].volume.value +
+                '" oninput="volumeInput(\'volumeValue' +
+                x +
+                "', this.value, '" +
+                curZone.outputs[x].output_id +
+                "')\" onchange=\"volumeChange('volumeValue" +
+                x +
+                "', this.value, '" +
+                curZone.outputs[x].output_id +
+                "')\">";
+            html += "</div>";
+            html += '<button type="button" class="buttonFillHeight volumeButton"';
+            html +=
+                "onclick=\"volumeButton('volumeValue" +
+                x +
+                "', " +
+                (curZone.outputs[x].volume.value + curZone.outputs[x].volume.step) +
+                ", '" +
+                curZone.outputs[x].output_id +
+                "')\"";
+            html += 'name="Volume up"';
+            html += 'aria-label="Volume up"';
+            html += ">" + getSVG("volume-plus") + "</button>";
+            html += "</div>";
+
+            $("#volumeList").append(html);
+          } else {
+            $("#volumeList")
+                .append(
+                    '<div class="textBold">' +
+                    curZone.outputs[x].display_name +
+                    "</div>"
+                )
+                .append("<div>Fixed Volume</div>");
+          }
+        }
+      }
+
+      if (state.themeShowing === undefined) {
+        state.themeShowing = true;
+        showTheme(settings.theme);
+      }
+
+
+
+
+
 }
 
 function goCmd(cmd, zone_id) {

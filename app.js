@@ -7,6 +7,13 @@ var pairStatus = 0;
 var zoneStatus = [];
 var zoneList = [];
 
+let currInput = "Raspberry Pi";
+let currInputSerial = '!';
+let portList = [];
+let friendlyPortList = [];
+let serialStatus = "Closed";
+
+
 let serial,serialParser;
 let coreIP;
 
@@ -170,7 +177,7 @@ var roon = new RoonApi({
                 }
               }
             }
-            io.emit("zoneStatus", zoneStatus);
+            io.emit("zoneStatus", zoneStatus, currInput);
           } else if (i == "zones_added") {
             for (x in data.zones_added) {
               zone_id = data.zones_added[x].zone_id;
@@ -253,7 +260,7 @@ function removeDuplicateStatus(array, property) {
   }
 
   zoneStatus = new_array;
-  io.emit("zoneStatus", zoneStatus);
+  io.emit("zoneStatus", zoneStatus, currInput);
 }
 
 function refresh_browse(zone_id, options, callback) {
@@ -305,11 +312,6 @@ function load_browse(listoffset, callback) {
   );
 }
 
-let currInput = "Raspberry Pi";
-let currInputSerial = '!';
-let portList = [];
-let friendlyPortList = [];
-let serialStatus = "Closed";
 
 //let serial = new SerialPort({path: 'COM5', baudRate: 115200});
 //let serialParser = serial.pipe(new ReadlineParser({delimiter: '\n'}));
@@ -388,10 +390,10 @@ io.on("connection", function(socket) {
   io.emit("pairStatus", JSON.parse('{"pairEnabled": ' + pairStatus + "}"));
   io.emit("coreInfo", coreIP);
   io.emit("zoneList", zoneList);
-  io.emit("zoneStatus", zoneStatus);
-  io.emit("currInputUpdate", currInput);
+  io.emit("zoneStatus", zoneStatus, currInput);
   io.emit("availSerialPorts", portList, friendlyPortList);
   io.emit("serialStatus", serialStatus);
+  io.emit("currInputUpdate", currInput);
   console.log("CURRENT INPUT: " + currInput)
 
   socket.on("openSerial", function(newPort, newBaud) {
@@ -424,14 +426,14 @@ io.on("connection", function(socket) {
 
 
   socket.on("getZone", function() {
-    io.emit("zoneStatus", zoneStatus);
+    io.emit("zoneStatus", zoneStatus, currInput);
   });
 
   socket.on("getInput", function() {
     io.emit("currInputUpdate", currInput);
   })
 
-  socket.on("changeInput", function(msg){
+  socket.on("changeInput", function(msg, inString){
     switch (msg) {
       case '!':
         currInput = "Raspberry Pi";
@@ -457,6 +459,7 @@ io.on("connection", function(socket) {
         console.log("default case hit in changeInput");
     }
     console.log("input changed to " + currInput + " by web");
+    //io.emit("zoneStatus", zoneStatus);
     io.emit("currInputUpdate", currInput);
     writeSerial(currInputSerial);
 

@@ -55,7 +55,7 @@
         z-index: 1000;
       }
 
-      #buttonMenu {
+      #buttonMenuRight {
         position: absolute;
         background-color: rgba(0, 0, 0, 0.33);
         color: #eff0f1;
@@ -66,6 +66,18 @@
         z-index: 100;
         border: none;
         border-radius: 0 0 0 10px;
+      }
+      #buttonMenuLeft {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.33);
+        color: #eff0f1;
+        top: 0;
+        left: 0;
+        height: 54px;
+        width: auto;
+        z-index: 100;
+        border: none;
+        border-radius: 0 0 10px 0;
       }
     </style>
   </head>
@@ -129,15 +141,30 @@
       </div>
     </div>
 
-    <button
-      type="button"
-      id="buttonMenu"
-      class="buttonTrans"
-      onclick="$('#overlayMainMenu').show()"
-      name="Show main menu"
-      aria-label="Show main menu"
-    ></button>
+    <div>
+      <button
+        type="button"
+        id="buttonMenuLeft"
+        class="buttonTrans"
+        name="refresh"
+        onclick="refresh()"
+      ></button>
+      <button
+              type="button"
+              id="buttonMenuRight"
+              class="buttonTrans"
+              onclick="$('#overlayMainMenu').show()"
+              name="Show main menu"
+              aria-label="Show main menu"
+      ></button>
+    </div>
+
 
     <div id="pageLoading" class="fullscreenFlex">&nbsp;</div>
   </body>
 </html>
+<script>
+  function refresh(){
+    location.reload();
+  }
+</script>
