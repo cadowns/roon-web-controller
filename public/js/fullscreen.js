@@ -42,6 +42,7 @@ function showSection(sectionName) {
       $("#libraryBrowser").hide();
       $("#overlayMainMenu").hide();
       $("#inputInfo").hide();
+      $("#buttonMenuLeft").show();
       break;
     case "libraryBrowser":
       $("#buttonMenu").show();
@@ -52,6 +53,7 @@ function showSection(sectionName) {
       $("#nowPlaying").hide();
       $("#overlayMainMenu").hide();
       $("#inputInfo").hide();
+      $("#buttonMenuLeft").hide();
       break;
     case "inputsInfo":
       $("#buttonMenu").show();
@@ -61,6 +63,7 @@ function showSection(sectionName) {
       $("#nowPlaying").hide();
       $("#pageLoading").hide();
       $("#overlayMainMenu").hide();
+      $("#buttonMenuLeft").show();
       break;
     case "pairDisabled":
       // Show pairDisabled section
@@ -71,6 +74,7 @@ function showSection(sectionName) {
       $("#nowPlaying").hide();
       $("#pageLoading").hide();
       $("#inputInfo").hide();
+      $("#buttonMenuLeft").show();
       break;
 
     default:
