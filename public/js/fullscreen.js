@@ -3,6 +3,7 @@ var socket = io();
 let currInput;
 
 $(document).ready(function() {
+  $("#otherInputInfo").hide();
   $("#buttonMenuRight").html(getSVG("menu"));
   $("#buttonMenuLeft").html(getSVG("refresh"));
 
@@ -18,12 +19,19 @@ $(document).ready(function() {
 
   socket.on("currInputUpdate", function(payload) {
     currInput = payload;
-    if (currInput != "Raspberry Pi") {
+    if (currInput == "Raspberry Pi") {
+      $("#otherInputInfo").hide();
+      $("#nowPlaying").show();
       $("#nowPlayingButton").show();
       $("#libraryButton").show();
+      $("#buttonMenuRight").show();
+      $("#inputInfo").hide();
     } else {
-      $("#nowPlayingButton").show();
-      $("#libraryButton").show();
+      $("#nowPlaying").hide();
+      $("#nowPlayingButton").hide();
+      $("#libraryButton").hide();
+      $("#otherInputInfo").show();
+      $("#nowPlaying").hide();
     }
   });
 
@@ -64,6 +72,7 @@ function showSection(sectionName) {
       $("#pageLoading").hide();
       $("#overlayMainMenu").hide();
       $("#buttonMenuLeft").show();
+      $("#otherInputInfo").hide();
       break;
     case "pairDisabled":
       // Show pairDisabled section
